@@ -9,9 +9,9 @@
 - Распознавание текста с таймкодами по словам (Vosk)
 - Диаризация - выделение сегментов речи разных говорящих (SpeechBrain + агломеративная кластеризация)
 - Автоопределение числа спикеров или фиксированное значение
-- Пакетная обработка: все файлы из `./files/audio` -> результаты в `./files/out`
-    - `JSON` — структурированный результат (для парсинга в приложениях)
-    - `SRT` — готовые субтитры с разметкой `Пользователь Н: текст`
+- Пакетная обработка: все файлы из `./example/files/audio` -> результаты в `./example/files/out`
+  - `JSON` — структурированный результат (для парсинга в приложениях)
+  - `SRT` — готовые субтитры с разметкой `Пользователь Н: текст`
 
 ---
 
@@ -19,16 +19,29 @@
 
 ```bash
 sudo apt install ffmpeg mpg123
+pip install git+https://github.com/magomedcoder/stt-pipeline.git
+```
 
+#### Запуск примера
+
+Пакетная обработка: все файлы из ./example/files/audio автоматически обрабатываются и результаты сохраняются в ./example/files/out (JSON + SRT)
+
+Пример запуска из корня проекта:
+
+```bash
 python3 -m venv .venv
 
 source .venv/bin/activate
 
-pip install -r requirements.txt
+pip install -r example/requirements.txt
 
 wget https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
 
-git clone https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb models/spkrec-ecapa-voxceleb
+unzip vosk-model-small-ru-0.22.zip -d example/models/
+
+git clone https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb example/models/spkrec-ecapa-voxceleb
+
+python3 -m example.main
 ```
 
 ---
