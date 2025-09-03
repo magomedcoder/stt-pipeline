@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from pathlib import Path
 from typing import List, Tuple
@@ -106,5 +107,12 @@ def choose_n_clusters(n_req: int | None, n_items: int) -> int:
     return max(2, min(4, max(1, n_items)))
 
 def load_classifier(model_dir: Path) -> EncoderClassifier:
-    key = ("speechbrain_ecapa", str(model_dir.resolve()))
-    return load_cached(key, lambda: EncoderClassifier.from_hparams(source=str(model_dir)))
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    key = ("speechbrain_ecapa", str(model_dir.resolve()), device)
+    return load_cached(
+        key,
+        lambda: EncoderClassifier.from_hparams(
+            source=str(model_dir),
+            run_opts={"device": device}
+        )
+    )

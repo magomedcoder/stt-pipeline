@@ -6,3 +6,4 @@ speechbrain==1.0.3
 python-multipart==0.0.20
 scikit-learn==1.7.1
 torchaudio==2.8.0
+fastapi==0.116.1

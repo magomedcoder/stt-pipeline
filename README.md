@@ -41,7 +41,11 @@ unzip vosk-model-small-ru-0.22.zip -d example/models/
 
 git clone https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb example/models/spkrec-ecapa-voxceleb
 
+# Запуск пакетной обработки (обработает все файлы из ./example/files/audio)
 python3 -m example.main
+
+# Альтернативный вариант - запуск http-сервера
+python3 -m example.http_server
 ```
 
 ---
