@@ -8,6 +8,7 @@ from ..domain.entities import TranscriptResult, Utterance, Word
 from ..infra.io_utils import ensure_dir, write_json
 from ..adapters.audio_decode_ffmpeg import temp_wav_16k
 
+
 def _to_srt_ts(t: float) -> str:
     if t < 0:
         t = 0.0
@@ -18,12 +19,14 @@ def _to_srt_ts(t: float) -> str:
     ms = int(round((t - int(t)) * 1000))
     return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
+
 def _spk_index(label: Optional[str]) -> int:
     if not label:
         return 0
 
     m = re.search(r"(\d+)", label)
     return int(m.group(1)) if m else 0
+
 
 def _collect_words(result: TranscriptResult) -> List[Word]:
     words: List[Word] = []
@@ -38,6 +41,7 @@ def _collect_words(result: TranscriptResult) -> List[Word]:
  
     words.sort(key=lambda w: (w.start, w.end))
     return words
+
 
 def _block_from_utterance(u: Utterance) -> Dict[str, Any]:
     spk = _spk_index(u.speaker)
@@ -56,6 +60,7 @@ def _block_from_utterance(u: Utterance) -> Dict[str, Any]:
         "spk": spk,
         "text": text
     }
+
 
 def _result_to_schema(result: TranscriptResult) -> Dict[str, Any]:
     words = _collect_words(result)
@@ -89,6 +94,7 @@ def _result_to_schema(result: TranscriptResult) -> Dict[str, Any]:
         "blocks": blocks,
     }
 
+
 """
     blocks: [{"start": float, "end": float, "spk": int, "text": str}]
     Формат строки:
@@ -107,6 +113,7 @@ def _write_srt_blocks(path: Path, blocks: List[Dict[str, Any]]) -> None:
             line = f"Пользователь {spk + 1}: {text}" if text else f"Пользователь {spk + 1}:"
 
             f.write(f"{i}\n{start_ts} --> {end_ts}\n{line}\n\n")
+
 
 """
     1) Декодируем вход в WAV mono 16k (временный файл)

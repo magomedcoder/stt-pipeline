@@ -10,6 +10,7 @@ from ..domain.entities import TranscriptResult, Utterance
 from ..domain.ports import Diarizer
 from ..config import DiarizationConfig
 
+
 class SB_Diarizer(Diarizer):
     def __init__(self, cfg: DiarizationConfig):
         if not cfg.speechbrain_model_dir:
@@ -74,6 +75,7 @@ class SB_Diarizer(Diarizer):
 
                     with torch.no_grad():
                         emb = self.clf.encode_batch(batch).mean(dim=1).cpu().numpy()
+ 
                     embs_list.append(emb)
                     cur_batch = []
                     cur_sec = 0.0

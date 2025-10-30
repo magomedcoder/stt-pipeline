@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+
 @dataclass(frozen=True)
 class VoskConfig:
     # Путь к папке с распакованной моделью Vosk
@@ -12,6 +13,7 @@ class VoskConfig:
     return_words: bool = True
     # Максимальная длительность обрабатываемого файла (сек), None = без ограничения
     max_seconds: Optional[int] = None
+
 
 @dataclass(frozen=True)
 class DiarizationConfig:
@@ -33,6 +35,7 @@ class DiarizationConfig:
     # 0.0 = батчинг отключён
     batch_seconds: float = 0.0
 
+
 @dataclass(frozen=True)
 class OutputConfig:
     # Папка для сохранения результатов (JSON, SRT)
@@ -43,6 +46,7 @@ class OutputConfig:
     save_srt: bool = True
     # Озвучивать ли результат распознавания голосом (если есть TTS)
     say_result: bool = False
+
 
 @dataclass(frozen=True)
 class PipelineConfig:

@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 from typing import List, Optional, Any
 
+
 @dataclass
 class Word:
     text: str
     start: float
     end: float
     conf: float
+
 
 @dataclass
 class Utterance:
@@ -15,6 +17,7 @@ class Utterance:
     end: float
     text: str
     words: Optional[List[Word]] = None
+
 
 @dataclass
 class TranscriptResult:

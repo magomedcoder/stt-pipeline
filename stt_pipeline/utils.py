@@ -7,6 +7,7 @@ from speechbrain.inference import EncoderClassifier
 from .domain.entities import Word
 from .infra.caching import load_cached
 
+
 """
     Простой безопасный ресемпл (линейная интерполяция), без внешних зависимостей
 """
@@ -27,6 +28,7 @@ def resample_to_16k(y: np.ndarray, sr: int, target_sr: int = 16000) -> Tuple[np.
     y_new = np.interp(new_idx, old_idx, y).astype(np.float32)
 
     return y_new, target_sr
+
 
 """
     Возвращает список окон как (s_idx, e_idx, s_time, e_time)
@@ -49,6 +51,7 @@ def frame_windows(total_samples: int, sr: int, win_sec: float, hop_sec: float) -
         s += hop
     return idxs
 
+
 """
     Фильтруем тишину/очень слабые фрагменты
 """
@@ -58,6 +61,7 @@ def energy_ok(x: np.ndarray) -> bool:
 
     rms = float(np.sqrt(np.mean(np.square(x))))
     return rms > 1e-4
+
 
 """
     Сливает соседние окна одного спикера, если пауза между ними <= min_silence_merge
@@ -89,6 +93,7 @@ def merge_segments(
     merged.append((cur_lab, cur_s, cur_e))
     return merged
 
+
 """
     Возвращает слова, чьи центры попадают в [s, e]
 """
@@ -101,10 +106,12 @@ def words_in_span(words: List[Word], s: float, e: float) -> List[Word]:
 
     return out
 
+
 def choose_n_clusters(n_req: int | None, n_items: int) -> int:
     if n_req and n_req > 0:
         return int(n_req)
     return max(2, min(4, max(1, n_items)))
+
 
 def load_classifier(model_dir: Path) -> EncoderClassifier:
     device = "cuda" if torch.cuda.is_available() else "cpu"

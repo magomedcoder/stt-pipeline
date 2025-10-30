@@ -3,13 +3,16 @@ import json
 from pathlib import Path
 from typing import List
 
+
 def ensure_dir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
+
 
 def write_json(p: Path, data) -> None:
     ensure_dir(p.parent)
     with p.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
 
 def write_srt(p: Path, items: List[dict]) -> None:
     ensure_dir(p.parent)

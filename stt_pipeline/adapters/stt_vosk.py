@@ -10,6 +10,7 @@ from ..infra.caching import load_cached
 
 SetLogLevel(-1)
 
+
 def _read_mono_16k_pcm_wav(path: Path, sample_rate: int) -> wave.Wave_read:
     wf = wave.open(str(path), "rb")
     if wf.getnchannels() != 1 or wf.getsampwidth() != 2 or wf.getframerate() != sample_rate:
@@ -17,6 +18,7 @@ def _read_mono_16k_pcm_wav(path: Path, sample_rate: int) -> wave.Wave_read:
         raise ValueError("Ожидается WAV: mono, 16-bit PCM, sample_rate == cfg.sample_rate")
 
     return wf
+
 
 class VoskEngine(STTEngine):
     def __init__(self, cfg: VoskConfig):
