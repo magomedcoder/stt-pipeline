@@ -1,5 +1,5 @@
-from example.config import INPUT_ROOT, OUT_DIR
-from example.process import local_process_one
+from config import INPUT_ROOT, OUT_DIR
+from process import local_process_one
 
 
 def main():

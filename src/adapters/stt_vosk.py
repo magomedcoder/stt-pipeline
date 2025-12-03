@@ -3,10 +3,12 @@ import json, wave, contextlib
 from pathlib import Path
 from typing import List
 from vosk import Model, KaldiRecognizer, SetLogLevel
-from ..domain.entities import TranscriptResult, Utterance, Word
-from ..domain.ports import STTEngine
-from ..config import VoskConfig
-from ..infra.caching import load_cached
+
+from src.config import VoskConfig
+from src.domain.entities import TranscriptResult, Utterance, Word
+from src.domain.ports import STTEngine
+from src.infra.caching import load_cached
+
 
 SetLogLevel(-1)
 
@@ -18,7 +20,6 @@ def _read_mono_16k_pcm_wav(path: Path, sample_rate: int) -> wave.Wave_read:
         raise ValueError("Ожидается WAV: mono, 16-bit PCM, sample_rate == cfg.sample_rate")
 
     return wf
-
 
 class VoskEngine(STTEngine):
     def __init__(self, cfg: VoskConfig):

@@ -5,10 +5,11 @@ import soundfile as sf
 from pathlib import Path
 from typing import List, Tuple
 from sklearn.cluster import AgglomerativeClustering
-from ..utils import words_in_span, choose_n_clusters, energy_ok, frame_windows, load_classifier, merge_segments, resample_to_16k
-from ..domain.entities import TranscriptResult, Utterance
-from ..domain.ports import Diarizer
-from ..config import DiarizationConfig
+
+from src.config import DiarizationConfig
+from src.utils import words_in_span, choose_n_clusters, energy_ok, frame_windows, load_classifier, merge_segments, resample_to_16k
+from src.domain.entities import TranscriptResult, Utterance
+from src.domain.ports import Diarizer
 
 
 class SB_Diarizer(Diarizer):

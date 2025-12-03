@@ -1,19 +1,16 @@
-from __future__ import annotations
-
 import os
 import traceback
 import uvicorn
 
 from pathlib import Path
-
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from example.config import OUT_DIR, TMP_DIR, VOSK_MODEL_DIR
-from example.process import build_response_dto, make_pipeline
-from stt_pipeline.adapters.audio_decode_ffmpeg import temp_wav_16k, AudioDecodeError
-from stt_pipeline.infra.io_utils import write_srt, write_json
+from src.config import OUT_DIR, TMP_DIR
+from src.process import build_response_dto, make_pipeline
+from src.adapters.audio_decode_ffmpeg import temp_wav_16k, AudioDecodeError
+from src.infra.io_utils import write_srt, write_json
 
 
 def main():
@@ -26,9 +23,6 @@ def main():
 
     @app.post("/stt-speaker")
     async def stt_speaker(diarize: str = Form("true"), return_srt: str = Form("false"), file: UploadFile = File(...)):
-        if not VOSK_MODEL_DIR.exists():
-            raise HTTPException(status_code=500, detail="Vosk модель не найдена")
-
         diarize_enabled = (diarize or "").strip().lower() == "true"
         return_srt_flag = (return_srt or "").strip().lower() == "true"
 

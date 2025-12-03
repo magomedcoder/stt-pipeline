@@ -1,13 +1,13 @@
 from pathlib import Path
 from pathlib import Path
+
 from typing import Optional, List, Dict, Any
 
-from example.config import OUT_DIR, SB_MODEL_DIR, VOSK_MODEL_DIR
-from stt_pipeline import PipelineConfig, VoskConfig, DiarizationConfig, OutputConfig, VoskEngine, SB_Diarizer, transcribe_file
-from stt_pipeline.config import PipelineConfig, VoskConfig, DiarizationConfig, OutputConfig
-from stt_pipeline.adapters.stt_vosk import VoskEngine
-from stt_pipeline.adapters.diarization_speechbrain import SB_Diarizer
-from stt_pipeline.domain.entities import TranscriptResult
+from src.config import PipelineConfig, VoskConfig, DiarizationConfig, OutputConfig
+from src.adapters.stt_vosk import VoskEngine
+from src.adapters.diarization_speechbrain import SB_Diarizer
+from src.domain.entities import TranscriptResult
+from src.usecases.transcribe import transcribe_file
 
 """
 ffmpeg -v warning -fflags +discardcorrupt -err_detect ignore_err -probesize 200M -analyzeduration 200M -i "audio.mp3" -map 0:a:0 -c:a libmp3lame -q:a 2 fixed.mp3
@@ -15,18 +15,8 @@ ffmpeg -v warning -fflags +discardcorrupt -err_detect ignore_err -probesize 200M
 ffmpeg -v warning -y -i fixed.mp3 -ac 1 -ar 16000 out.wav
 """
 
-def local_process_one(audio_path: Path, out_dir: Path):
-    if not VOSK_MODEL_DIR.exists():
-        raise FileNotFoundError(f"Не найдена модель Vosk")
-
-    if not SB_MODEL_DIR.exists():
-        raise FileNotFoundError(f"Не найдена модель SpeechBrain")
-
-    cfg = PipelineConfig(
-        vosk=VoskConfig(model_path=VOSK_MODEL_DIR),
-        diarization=DiarizationConfig(speechbrain_model_dir=SB_MODEL_DIR),
-        output=OutputConfig(out_dir=out_dir),
-    )
+def local_process_one(audio_path: Path):
+    cfg = PipelineConfig()
 
     stt = VoskEngine(cfg.vosk)
     diar = SB_Diarizer(cfg.diarization) if cfg.diarization.enabled else None
@@ -39,19 +29,8 @@ def local_process_one(audio_path: Path, out_dir: Path):
 
 
 def make_pipeline(diarize_enabled: bool) -> tuple[VoskEngine, Optional[SB_Diarizer], PipelineConfig]:
-    if not VOSK_MODEL_DIR.exists():
-        raise FileNotFoundError(f"Не найдена модель Vosk")
-
-    if not SB_MODEL_DIR.exists():
-        raise FileNotFoundError(f"Не найдена модель SpeechBrain")
-
     cfg = PipelineConfig(
-        vosk=VoskConfig(model_path=VOSK_MODEL_DIR),
-        diarization=DiarizationConfig(
-            enabled=diarize_enabled,
-            speechbrain_model_dir=SB_MODEL_DIR if diarize_enabled else None,
-        ),
-        output=OutputConfig(out_dir=OUT_DIR),
+        diarization=DiarizationConfig(enabled=diarize_enabled),
     )
 
     stt = VoskEngine(cfg.vosk)

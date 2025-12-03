@@ -1,12 +1,29 @@
+from pathlib import Path
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+model_vosk_path = Path("./models/vosk-model-small-ru-0.22")
+speechbrain_model_dir = Path("./models/spkrec-ecapa-voxceleb")
+
+INPUT_ROOT = Path("./files/audio")
+OUT_DIR = Path("./files/out")
+TMP_DIR = Path("./files/tmp")
+
+
+if not model_vosk_path.exists():
+    raise FileNotFoundError(f"Не найдена модель Vosk")
+
+if not speechbrain_model_dir.exists():
+    raise FileNotFoundError(f"Не найдена модель SpeechBrain")
+
+if not OUT_DIR.exists():
+    raise FileNotFoundError(f"Не найдена files/out")
+
 
 @dataclass(frozen=True)
 class VoskConfig:
-    # Путь к папке с распакованной моделью Vosk
-    model_path: Path
+    model_path: Path = model_vosk_path
     # Целевая частота дискретизации входного WAV (Гц)
     sample_rate: int = 16000
     # Включить ли возврат списка слов с таймкодами (True -> подробный JSON)
@@ -17,10 +34,9 @@ class VoskConfig:
 
 @dataclass(frozen=True)
 class DiarizationConfig:
+    speechbrain_model_dir: Optional[Path] = speechbrain_model_dir
     # Включена ли диаризация
     enabled: bool = True
-    # Путь к модели SpeechBrain
-    speechbrain_model_dir: Optional[Path] = None
     # Число спикеров:
     #   None или 0 -> автооценка (кластеризация сама подберёт)
     #   >0 -> фиксированное количество
@@ -39,7 +55,7 @@ class DiarizationConfig:
 @dataclass(frozen=True)
 class OutputConfig:
     # Папка для сохранения результатов (JSON, SRT)
-    out_dir: Path
+    out_dir: Path = OUT_DIR
     # Сохранять ли "сырые" результаты распознавания в JSON
     save_json: bool = True
     # Сохранять ли субтитры в формате .srt

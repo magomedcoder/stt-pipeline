@@ -9,7 +9,7 @@
 - Распознавание текста с таймкодами по словам (Vosk)
 - Диаризация - выделение сегментов речи разных говорящих (SpeechBrain + агломеративная кластеризация)
 - Автоопределение числа спикеров или фиксированное значение
-- Пакетная обработка: все файлы из `./example/files/audio` -> результаты в `./example/files/out`
+- Пакетная обработка: все файлы из `./files/audio` -> результаты в `./files/out`
   - `JSON` — структурированный результат (для парсинга в приложениях)
   - `SRT` — готовые субтитры с разметкой `Пользователь Н: текст`
 
@@ -24,7 +24,7 @@ pip install git+https://github.com/magomedcoder/stt-pipeline.git
 
 #### Запуск примера
 
-Пакетная обработка: все файлы из ./example/files/audio автоматически обрабатываются и результаты сохраняются в ./example/files/out (JSON + SRT)
+Пакетная обработка: все файлы из ./files/audio автоматически обрабатываются и результаты сохраняются в ./files/out (JSON + SRT)
 
 Пример запуска из корня проекта:
 
@@ -33,19 +33,21 @@ python3 -m venv .venv
 
 source .venv/bin/activate
 
-pip install -r example/requirements.txt
+pip install -r requirements.txt 
+
+mkdir models && mkdir -p files/audio files/out files/tmp
 
 wget https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
 
-unzip vosk-model-small-ru-0.22.zip -d example/models/
+unzip vosk-model-small-ru-0.22.zip -d models/
 
-git clone https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb example/models/spkrec-ecapa-voxceleb
+git clone https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb models/spkrec-ecapa-voxceleb
 
-# Запуск пакетной обработки (обработает все файлы из ./example/files/audio)
-python3 -m example.run_local_file
+# Запуск пакетной обработки (обработает все файлы из ./files/audio)
+python3 run_local.py
 
 # Альтернативный вариант - запуск http-сервера
-python3 -m example.run_http_server
+python3 run_http.py
 ```
 
 ---

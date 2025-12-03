@@ -2,12 +2,12 @@ import re
 
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from ..config import PipelineConfig
-from ..domain.ports import STTEngine, Diarizer
-from ..domain.entities import TranscriptResult, Utterance, Word
-from ..infra.io_utils import ensure_dir, write_json
-from ..adapters.audio_decode_ffmpeg import temp_wav_16k
+from config import PipelineConfig
 
+from src.domain.ports import STTEngine, Diarizer
+from src.domain.entities import TranscriptResult, Utterance, Word
+from src.infra.io_utils import ensure_dir, write_json
+from src.adapters.audio_decode_ffmpeg import temp_wav_16k
 
 def _to_srt_ts(t: float) -> str:
     if t < 0:

@@ -4,8 +4,9 @@ import torch
 from pathlib import Path
 from typing import List, Tuple
 from speechbrain.inference import EncoderClassifier
-from .domain.entities import Word
-from .infra.caching import load_cached
+
+from src.domain.entities import Word
+from src.infra.caching import load_cached
 
 
 """
