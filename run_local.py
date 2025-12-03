@@ -1,5 +1,5 @@
-from config import INPUT_ROOT, OUT_DIR
-from process import local_process_one
+from src.config import INPUT_ROOT
+from src.process import local_process_one
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     if INPUT_ROOT.is_file():
         if INPUT_ROOT.suffix.lower() in audio_exts:
             try:
-                local_process_one(INPUT_ROOT, OUT_DIR)
+                local_process_one(INPUT_ROOT)
             except Exception as e:
                 print(f"[FAIL] {INPUT_ROOT.name}: {e}")
         else:
@@ -24,7 +24,7 @@ def main():
         if p.is_file() and p.suffix.lower() in audio_exts:
             any_found = True
             try:
-                local_process_one(p, OUT_DIR)
+                local_process_one(p)
             except Exception as e:
                 print(f"[SKIP] {p.name}: {e}")
 

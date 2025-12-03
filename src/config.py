@@ -66,6 +66,6 @@ class OutputConfig:
 
 @dataclass(frozen=True)
 class PipelineConfig:
-    vosk: VoskConfig
-    diarization: DiarizationConfig
-    output: OutputConfig
+    vosk: VoskConfig = VoskConfig()
+    diarization: DiarizationConfig = DiarizationConfig()
+    output: OutputConfig = OutputConfig()
