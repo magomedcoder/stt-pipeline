@@ -7,13 +7,18 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.adapters.audio_decode_ffmpeg import temp_wav_16k, AudioDecodeError
+from src.adapters.audio_decode_ffmpeg import AudioDecodeError
 from src.config import OUT_DIR, TMP_DIR
-from src.infra.io_utils import write_srt, write_json
-from src.process import build_response_dto, make_pipeline
+from src.infra.io_utils import write_json, write_srt_blocks
+from src.infra.schema import build_response_dto
+from src.process import make_pipeline
+from src.usecases.transcribe import transcribe_audio
 
 
 def main():
+    TMP_DIR.mkdir(parents=True, exist_ok=True)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+
     app = FastAPI()
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -33,31 +38,12 @@ def main():
 
         try:
             stt, diar, cfg = make_pipeline(diarize_enabled)
-
-            with temp_wav_16k(tmp_in, sr=cfg.vosk.sample_rate) as wav16:
-                result = stt.transcribe(Path(wav16))
-
-                if diar is not None:
-                    try:
-                        result = diar.assign_speakers(result, Path(wav16))
-                    except Exception as e:
-                        print(f"[WARN] Диаризация не удалась: {e}")
-
-                dto = build_response_dto(result)
-
+            result = transcribe_audio(tmp_in, cfg, stt, diar)
             dto = build_response_dto(result)
 
             if return_srt_flag:
-                srt_items = []
-                for i, b in enumerate(dto["blocks"], start=1):
-                    srt_items.append({
-                        "index": i,
-                        "start": float(b["start"]),
-                        "end": float(b["end"]),
-                        "text": f"spk {b['spk']}: {b['text']}"
-                    })
                 srt_path = OUT_DIR / f"{tmp_in.stem}.srt"
-                write_srt(srt_path, srt_items)
+                write_srt_blocks(srt_path, dto["blocks"])
                 dto["srt"] = srt_path.read_text(encoding="utf-8")
 
             raw_path = OUT_DIR / f"{tmp_in.stem}.json"
@@ -67,6 +53,8 @@ def main():
 
         except AudioDecodeError as e:
             raise HTTPException(status_code=400, detail=f"Ошибка декодирования: {e}")
+        except FileNotFoundError as e:
+            raise HTTPException(status_code=503, detail=str(e))
         except Exception as e:
             tb = traceback.format_exc(limit=2)
             raise HTTPException(status_code=500, detail=f"Внутренняя ошибка: {e}\n{tb}")

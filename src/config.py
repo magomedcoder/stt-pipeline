@@ -9,15 +9,6 @@ INPUT_ROOT = Path("./files/audio")
 OUT_DIR = Path("./files/out")
 TMP_DIR = Path("./files/tmp")
 
-if not model_vosk_path.exists():
-    raise FileNotFoundError(f"Не найдена модель Vosk")
-
-if not speechbrain_model_dir.exists():
-    raise FileNotFoundError(f"Не найдена модель SpeechBrain")
-
-if not OUT_DIR.exists():
-    raise FileNotFoundError(f"Не найдена files/out")
-
 
 @dataclass(frozen=True)
 class VoskConfig:
@@ -67,3 +58,18 @@ class PipelineConfig:
     vosk: VoskConfig = VoskConfig()
     diarization: DiarizationConfig = DiarizationConfig()
     output: OutputConfig = OutputConfig()
+
+
+def validate_pipeline_config(cfg: PipelineConfig | None = None) -> None:
+    cfg = cfg or PipelineConfig()
+
+    if not cfg.vosk.model_path.exists():
+        raise FileNotFoundError(f"Не найдена модель Vosk: {cfg.vosk.model_path}")
+
+    if cfg.diarization.enabled:
+        model_dir = cfg.diarization.speechbrain_model_dir
+        if not model_dir or not model_dir.exists():
+            raise FileNotFoundError(f"Не найдена модель SpeechBrain: {model_dir}")
+
+    cfg.output.out_dir.mkdir(parents=True, exist_ok=True)
+    TMP_DIR.mkdir(parents=True, exist_ok=True)

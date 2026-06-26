@@ -109,9 +109,16 @@ def words_in_span(words: List[Word], s: float, e: float) -> List[Word]:
 
 
 def choose_n_clusters(n_req: int | None, n_items: int) -> int:
+    if n_items <= 0:
+        return 1
+
     if n_req and n_req > 0:
-        return int(n_req)
-    return max(2, min(4, max(1, n_items)))
+        return min(int(n_req), n_items)
+
+    if n_items == 1:
+        return 1
+
+    return max(2, min(4, n_items))
 
 
 def load_classifier(model_dir: Path) -> EncoderClassifier:

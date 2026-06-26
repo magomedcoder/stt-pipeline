@@ -35,11 +35,11 @@ source .venv/bin/activate
 
 pip install -e .
 
-mkdir models && mkdir -p files/audio files/out files/tmp
+mkdir -p models files/audio files/out files/tmp
 
-wget https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
+wget -P models/ https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
 
-unzip vosk-model-small-ru-0.22.zip -d models/
+unzip models/vosk-model-small-ru-0.22.zip -d models/
 
 git clone https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb models/spkrec-ecapa-voxceleb
 

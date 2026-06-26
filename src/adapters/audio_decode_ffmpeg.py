@@ -288,7 +288,7 @@ def _decode_to_wav16k(inp: Path, sr: int) -> Path:
                             raise AudioDecodeError(
                                 "MP3 сильно повреждён.\n "
                                 "Шаги: ffmpeg -> ffmpeg(mp3) -> ремультиплекс -> mpg123 -> сегментное спасение\n "
-                                "Ошибки:\n1) {e1}\n\n2) {e2}\n\n3) {e3}\n\n4) {e4}\n\n5) {e5}"
+                                f"Ошибки:\n1) {e1}\n\n2) {e2}\n\n3) {e3}\n\n4) {e4}\n\n5) {e5}"
                             )
 
         raise AudioDecodeError(f"ffmpeg decode failed: {e1}")

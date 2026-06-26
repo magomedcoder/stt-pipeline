@@ -60,6 +60,17 @@ class SB_Diarizer(Diarizer):
             result.utterances = [base]
             return result
 
+        if len(tensors) == 1:
+            s_t, e_t = chunks[0][2], chunks[0][3]
+            seg_words = words_in_span(base.words or [], s_t, e_t)
+            base.speaker = "SPEAKER_0"
+            base.start = s_t
+            base.end = e_t
+            base.text = " ".join(w.text for w in seg_words)
+            base.words = seg_words or None
+            result.utterances = [base]
+            return result
+
         embs_list: List[np.ndarray] = []
         if self.cfg.batch_seconds and self.cfg.batch_seconds > 0.0:
             max_sec = float(self.cfg.batch_seconds)
@@ -109,7 +120,7 @@ class SB_Diarizer(Diarizer):
         new_utts: List[Utterance] = []
         for lab, s, e in merged:
             seg_words = words_in_span(base.words or [], s, e)
-            seg_text = " ".join(w.text for w in seg_words) if seg_words else base.text
+            seg_text = " ".join(w.text for w in seg_words)
             new_utts.append(Utterance(
                 speaker=f"SPEAKER_{int(lab)}",
                 start=s,
