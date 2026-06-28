@@ -1,7 +1,7 @@
 import re
 from typing import Optional, List, Dict, Any
 
-from src.domain.entities import TranscriptResult, Utterance, Word
+from sttspeakerid.domain.entities import TranscriptResult, Utterance, Word
 
 
 def speaker_str_to_int(s: Optional[str]) -> int:

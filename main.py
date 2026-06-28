@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.process import local_process_one
+from sttspeakerid.process import local_process_one
 
 
 def main():

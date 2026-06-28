@@ -6,10 +6,10 @@ import soundfile as sf
 import torch
 from sklearn.cluster import AgglomerativeClustering
 
-from src.config import DiarizationConfig
-from src.domain.entities import TranscriptResult
-from src.domain.ports import Diarizer
-from src.utils import (
+from sttspeakerid.config import DiarizationConfig
+from sttspeakerid.domain.entities import TranscriptResult
+from sttspeakerid.domain.ports import Diarizer
+from sttspeakerid.utils import (
     assign_word_speaker_labels,
     build_utterances_from_words,
     choose_n_clusters,

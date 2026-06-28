@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from src.domain.entities import TranscriptResult
+from sttspeakerid.domain.entities import TranscriptResult
 
 
 class STTEngine(ABC):

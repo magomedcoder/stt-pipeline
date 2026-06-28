@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Optional
 
-from src.adapters.audio_decode_ffmpeg import temp_wav_16k
-from src.config import PipelineConfig, validate_pipeline_config
-from src.domain.entities import TranscriptResult
-from src.domain.ports import STTEngine, Diarizer
-from src.infra.io_utils import write_json, write_srt_blocks
-from src.infra.schema import build_response_dto
+from sttspeakerid.adapters.audio_decode_ffmpeg import temp_wav_16k
+from sttspeakerid.config import PipelineConfig, validate_pipeline_config
+from sttspeakerid.domain.entities import TranscriptResult
+from sttspeakerid.domain.ports import STTEngine, Diarizer
+from sttspeakerid.infra.io_utils import write_json, write_srt_blocks
+from sttspeakerid.infra.schema import build_response_dto
 
 
 def transcribe_audio(

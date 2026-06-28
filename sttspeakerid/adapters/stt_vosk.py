@@ -6,10 +6,10 @@ from typing import List
 
 from vosk import Model, KaldiRecognizer, SetLogLevel
 
-from src.config import VoskConfig
-from src.domain.entities import TranscriptResult, Utterance, Word
-from src.domain.ports import STTEngine
-from src.infra.caching import load_cached
+from sttspeakerid.config import VoskConfig
+from sttspeakerid.domain.entities import TranscriptResult, Utterance, Word
+from sttspeakerid.domain.ports import STTEngine
+from sttspeakerid.infra.caching import load_cached
 
 SetLogLevel(-1)
 

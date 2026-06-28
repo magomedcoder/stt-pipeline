@@ -7,8 +7,8 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import silhouette_score
 from speechbrain.inference import EncoderClassifier
 
-from src.domain.entities import Utterance, Word
-from src.infra.caching import load_cached
+from sttspeakerid.domain.entities import Utterance, Word
+from sttspeakerid.infra.caching import load_cached
 
 
 def resample_to_16k(y: np.ndarray, sr: int, target_sr: int = 16000) -> Tuple[np.ndarray, int]:

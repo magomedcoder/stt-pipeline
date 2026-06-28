@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Optional
 
-from src.adapters.diarization_speechbrain import SB_Diarizer
-from src.adapters.stt_vosk import VoskEngine
-from src.config import PipelineConfig, DiarizationConfig, validate_pipeline_config
-from src.usecase.transcribe import transcribe_file
+from sttspeakerid.adapters.diarization_speechbrain import SB_Diarizer
+from sttspeakerid.adapters.stt_vosk import VoskEngine
+from sttspeakerid.config import PipelineConfig, DiarizationConfig, validate_pipeline_config
+from sttspeakerid.usecase.transcribe import transcribe_file
 
 """
  ffmpeg -v warning -fflags +discardcorrupt -err_detect ignore_err -probesize 200M -analyzeduration 200M -i "audio.mp3" -map 0:a:0 -c:a libmp3lame -q:a 2 fixed.mp3
