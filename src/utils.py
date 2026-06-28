@@ -1,11 +1,13 @@
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import silhouette_score
 from speechbrain.inference import EncoderClassifier
 
-from src.domain.entities import Word
+from src.domain.entities import Utterance, Word
 from src.infra.caching import load_cached
 
 
@@ -64,51 +66,35 @@ def energy_ok(x: np.ndarray) -> bool:
     return rms > 1e-4
 
 
-def merge_segments(
-        labels: List[int],
-        times: List[Tuple[float, float]],
-        min_silence_merge: float
-) -> List[Tuple[int, float, float]]:
+def dedupe_words(words: List[Word]) -> List[Word]:
     """
-        Сливает соседние окна одного спикера, если пауза между ними <= min_silence_merge
-        Возвращает список (label, start, end)
+        Убирает подряд идущие дубликаты слов с одинаковыми таймкодами (артефакт Vosk)
     """
-    if not labels or not times:
+    if not words:
         return []
 
-    merged: List[Tuple[int, float, float]] = []
-    cur_lab = labels[0]
-    cur_s, cur_e = times[0]
-    for i in range(1, len(labels)):
-        lab = labels[i]
-        s, e = times[i]
-        gap = s - cur_e
-
-        if lab == cur_lab and gap <= min_silence_merge:
-            cur_e = max(cur_e, e)
-        else:
-            merged.append((cur_lab, cur_s, cur_e))
-            cur_lab = lab
-            cur_s, cur_e = s, e
-
-    merged.append((cur_lab, cur_s, cur_e))
-    return merged
-
-
-def words_in_span(words: List[Word], s: float, e: float) -> List[Word]:
-    """
-        Возвращает слова, чьи центры попадают в [s, e]
-    """
-    out: List[Word] = []
-    for w in words or []:
-        mid = 0.5 * (w.start + w.end)
-        if s <= mid <= e:
-            out.append(w)
+    out = [words[0]]
+    for w in words[1:]:
+        prev = out[-1]
+        if w.text == prev.text and w.start == prev.start and w.end == prev.end:
+            continue
+        out.append(w)
 
     return out
 
 
-def choose_n_clusters(n_req: int | None, n_items: int) -> int:
+def normalize_embeddings(X: np.ndarray) -> np.ndarray:
+    norms = np.linalg.norm(X, axis=1, keepdims=True)
+    return X / np.clip(norms, 1e-8, None)
+
+
+def choose_n_clusters(
+        n_req: int | None,
+        n_items: int,
+        X: np.ndarray | None = None,
+        max_speakers: int = 4,
+        min_silhouette: float = 0.12,
+) -> int:
     if n_items <= 0:
         return 1
 
@@ -118,7 +104,108 @@ def choose_n_clusters(n_req: int | None, n_items: int) -> int:
     if n_items == 1:
         return 1
 
-    return max(2, min(4, n_items))
+    if X is None or X.shape[0] != n_items:
+        return 1
+
+    X_norm = normalize_embeddings(X)
+    best_k = 1
+    best_score = -1.0
+
+    for k in range(2, min(max_speakers, n_items) + 1):
+        clustering = AgglomerativeClustering(n_clusters=k, metric="cosine", linkage="average")
+        labels = clustering.fit_predict(X_norm)
+        if len(np.unique(labels)) < 2:
+            continue
+
+        score = float(silhouette_score(X_norm, labels, metric="cosine"))
+        if score > best_score:
+            best_score = score
+            best_k = k
+
+    if best_score < min_silhouette:
+        return 1
+
+    return best_k
+
+
+def assign_word_speaker_labels(
+        words: List[Word],
+        chunks: List[Tuple[int, int, float, float]],
+        labels: List[int],
+) -> List[int]:
+    """
+        Назначает каждому слову ровно одного спикера по перекрытию с окнами эмбеддингов
+    """
+    if not words:
+        return []
+
+    window_labels = list(zip(chunks, labels))
+    out: List[int] = []
+
+    for w in words:
+        scores: Dict[int, float] = {}
+        for (_, _, s_t, e_t), lab in window_labels:
+            overlap = min(e_t, w.end) - max(s_t, w.start)
+            if overlap > 0:
+                scores[lab] = scores.get(lab, 0.0) + overlap
+
+        if scores:
+            out.append(max(scores, key=scores.get))  # type: ignore[arg-type]
+            continue
+
+        mid = 0.5 * (w.start + w.end)
+        _, nearest = min(
+            (abs(0.5 * (s_t + e_t) - mid), lab)
+            for (_, _, s_t, e_t), lab in window_labels
+        )
+        out.append(nearest)
+
+    return out
+
+
+def relabel_chronologically(word_labels: List[int]) -> List[int]:
+    """
+        Переименовывает кластеры: первый появившийся спикер -> 0, второй -> 1, ...
+    """
+    mapping: Dict[int, int] = {}
+    out: List[int] = []
+    for lab in word_labels:
+        if lab not in mapping:
+            mapping[lab] = len(mapping)
+        out.append(mapping[lab])
+    return out
+
+
+def build_utterances_from_words(words: List[Word], speaker_labels: List[int]) -> List[Utterance]:
+    if not words:
+        return []
+
+    speaker_labels = relabel_chronologically(speaker_labels)
+    utterances: List[Utterance] = []
+    cur_lab = speaker_labels[0]
+    cur_words: List[Word] = [words[0]]
+
+    for i in range(1, len(words)):
+        if speaker_labels[i] == cur_lab:
+            cur_words.append(words[i])
+        else:
+            utterances.append(_utterance_from_words(cur_lab, cur_words))
+            cur_lab = speaker_labels[i]
+            cur_words = [words[i]]
+
+    utterances.append(_utterance_from_words(cur_lab, cur_words))
+    return utterances
+
+
+def _utterance_from_words(lab: int, words: List[Word]) -> Utterance:
+    text = " ".join(w.text for w in words)
+    return Utterance(
+        speaker=f"SPEAKER_{lab}",
+        start=words[0].start,
+        end=words[-1].end,
+        text=text,
+        words=words,
+    )
 
 
 def load_classifier(model_dir: Path) -> EncoderClassifier:

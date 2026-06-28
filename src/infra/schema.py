@@ -20,9 +20,17 @@ def speaker_str_to_int(s: Optional[str]) -> int:
 
 def _collect_words(result: TranscriptResult) -> List[Word]:
     words: List[Word] = []
+    seen: set[tuple[str, float, float]] = set()
     for u in result.utterances or []:
-        if u.words:
-            words.extend(u.words)
+        if not u.words:
+            continue
+
+        for w in u.words:
+            key = (w.text, float(w.start), float(w.end))
+            if key in seen:
+                continue
+            seen.add(key)
+            words.append(w)
 
     words.sort(key=lambda w: (w.start, w.end))
     return words
@@ -58,11 +66,15 @@ def build_response_dto(result: TranscriptResult) -> Dict[str, Any]:
     speakers: List[Dict[str, Any]] = []
     blocks: List[Dict[str, Any]] = []
     for u in result.utterances or []:
+        block = _block_from_utterance(u)
+        if not block["text"]:
+            continue
+
         spk = speaker_str_to_int(u.speaker)
         start = float(u.start if u.start is not None else (u.words[0].start if u.words else 0.0))
         end = float(u.end if u.end is not None else (u.words[-1].end if u.words else 0.0))
         speakers.append({"start": start, "end": end, "spk": spk})
-        blocks.append(_block_from_utterance(u))
+        blocks.append(block)
 
     if words_json:
         full_text = " ".join(w["word"] for w in words_json)

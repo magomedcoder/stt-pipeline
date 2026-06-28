@@ -2,17 +2,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-model_vosk_path = Path("./models/vosk-model-small-ru-0.22")
-speechbrain_model_dir = Path("./models/spkrec-ecapa-voxceleb")
-
-INPUT_ROOT = Path("./files/audio")
-OUT_DIR = Path("./files/out")
-TMP_DIR = Path("./files/tmp")
-
 
 @dataclass(frozen=True)
 class VoskConfig:
-    model_path: Path = model_vosk_path
+    model_path: Path = Path("./models/vosk-model-small-ru-0.22")
     # Целевая частота дискретизации входного WAV (Гц)
     sample_rate: int = 16000
     # Включить ли возврат списка слов с таймкодами (True -> подробный JSON)
@@ -23,7 +16,7 @@ class VoskConfig:
 
 @dataclass(frozen=True)
 class DiarizationConfig:
-    speechbrain_model_dir: Optional[Path] = speechbrain_model_dir
+    speechbrain_model_dir: Optional[Path] = Path("./models/spkrec-ecapa-voxceleb")
     # Включена ли диаризация
     enabled: bool = True
     # Число спикеров:
@@ -44,7 +37,7 @@ class DiarizationConfig:
 @dataclass(frozen=True)
 class OutputConfig:
     # Папка для сохранения результатов (JSON, SRT)
-    out_dir: Path = OUT_DIR
+    out_dir: Path = Path("./files/out")
     # Сохранять ли "сырые" результаты распознавания в JSON
     save_json: bool = True
     # Сохранять ли субтитры в формате .srt
@@ -72,4 +65,3 @@ def validate_pipeline_config(cfg: PipelineConfig | None = None) -> None:
             raise FileNotFoundError(f"Не найдена модель SpeechBrain: {model_dir}")
 
     cfg.output.out_dir.mkdir(parents=True, exist_ok=True)
-    TMP_DIR.mkdir(parents=True, exist_ok=True)

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "stt-pipeline"
+name = "sttspeakerid"
 readme = "README.md"
 requires-python = ">=3.10"
 version = "0.0.0"
@@ -11,14 +11,12 @@ version = "0.0.0"
 dependencies = [
   "vosk==0.3.45",
   "librosa==0.11.0",
-  "soundfile==0.13.1",
-  "torch==2.8.0",
-  "speechbrain==1.0.3",
-  "python-multipart==0.0.20",
-  "scikit-learn==1.7.1",
-  "torchaudio==2.8.0",
-  "fastapi>=0.115.0",
-  "uvicorn[standard]>=0.32.0",
+  "soundfile==0.14.0",
+  "torch==2.12.1",
+  "speechbrain==1.1.0",
+  "python-multipart==0.0.32",
+  "scikit-learn==1.9.0",
+  "torchaudio==2.11.0",
 ]
 
 [tool.setuptools.packages.find]

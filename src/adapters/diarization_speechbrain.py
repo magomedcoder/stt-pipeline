@@ -7,9 +7,19 @@ import torch
 from sklearn.cluster import AgglomerativeClustering
 
 from src.config import DiarizationConfig
-from src.domain.entities import TranscriptResult, Utterance
+from src.domain.entities import TranscriptResult
 from src.domain.ports import Diarizer
-from src.utils import words_in_span, choose_n_clusters, energy_ok, frame_windows, load_classifier, merge_segments, resample_to_16k
+from src.utils import (
+    assign_word_speaker_labels,
+    build_utterances_from_words,
+    choose_n_clusters,
+    dedupe_words,
+    energy_ok,
+    frame_windows,
+    load_classifier,
+    normalize_embeddings,
+    resample_to_16k,
+)
 
 
 class SB_Diarizer(Diarizer):
@@ -25,6 +35,12 @@ class SB_Diarizer(Diarizer):
             return result
 
         base = result.utterances[0]
+        words = dedupe_words(base.words or [])
+
+        if not words:
+            base.speaker = "SPEAKER_0"
+            result.utterances = [base]
+            return result
 
         y, sr = sf.read(str(audio_path), always_2d=False)
         if isinstance(y, tuple):
@@ -39,6 +55,7 @@ class SB_Diarizer(Diarizer):
         frames = frame_windows(len(y), sr, self.cfg.window_sec, self.cfg.hop_sec)
         if not frames:
             base.speaker = "SPEAKER_0"
+            base.words = words
             result.utterances = [base]
             return result
 
@@ -57,20 +74,41 @@ class SB_Diarizer(Diarizer):
 
         if not tensors:
             base.speaker = "SPEAKER_0"
+            base.words = words
             result.utterances = [base]
             return result
 
         if len(tensors) == 1:
-            s_t, e_t = chunks[0][2], chunks[0][3]
-            seg_words = words_in_span(base.words or [], s_t, e_t)
             base.speaker = "SPEAKER_0"
-            base.start = s_t
-            base.end = e_t
-            base.text = " ".join(w.text for w in seg_words)
-            base.words = seg_words or None
+            base.words = words
+            base.text = " ".join(w.text for w in words)
             result.utterances = [base]
             return result
 
+        X = self._embed_segments(tensors, sec_per_sample)
+        X_norm = normalize_embeddings(X)
+
+        n_clusters = choose_n_clusters(self.cfg.n_speakers, X_norm.shape[0], X_norm)
+        clustering = AgglomerativeClustering(
+            n_clusters=n_clusters,
+            metric="cosine",
+            linkage="average",
+        )
+        labels = clustering.fit_predict(X_norm).tolist()
+
+        word_labels = assign_word_speaker_labels(words, chunks, labels)
+        new_utts = build_utterances_from_words(words, word_labels)
+
+        if not new_utts:
+            base.speaker = "SPEAKER_0"
+            base.words = words
+            result.utterances = [base]
+        else:
+            result.utterances = new_utts
+
+        return result
+
+    def _embed_segments(self, tensors: List[torch.Tensor], sec_per_sample: float) -> np.ndarray:
         embs_list: List[np.ndarray] = []
         if self.cfg.batch_seconds and self.cfg.batch_seconds > 0.0:
             max_sec = float(self.cfg.batch_seconds)
@@ -80,59 +118,27 @@ class SB_Diarizer(Diarizer):
                 cur_batch.append(wav)
                 cur_sec += wav.shape[-1] * sec_per_sample
                 if cur_sec >= max_sec:
-                    batch = torch.nn.utils.rnn.pad_sequence(
-                        [w.squeeze(0) for w in cur_batch],
-                        batch_first=True
-                    )
-
-                    with torch.no_grad():
-                        emb = self.clf.encode_batch(batch).mean(dim=1).cpu().numpy()
-
-                    embs_list.append(emb)
+                    embs_list.append(self._encode_batch(cur_batch))
                     cur_batch = []
                     cur_sec = 0.0
 
             if cur_batch:
-                batch = torch.nn.utils.rnn.pad_sequence(
-                    [w.squeeze(0) for w in cur_batch],
-                    batch_first=True
-                )
-                with torch.no_grad():
-                    emb = self.clf.encode_batch(batch).mean(dim=1).cpu().numpy()
+                embs_list.append(self._encode_batch(cur_batch))
 
-                embs_list.append(emb)
-            X = np.vstack(embs_list)
-        else:
-            X = []
-            with torch.no_grad():
-                for wav in tensors:
-                    emb = self.clf.encode_batch(wav).mean(dim=1).squeeze().cpu().numpy()
-                    X.append(emb)
-            X = np.vstack(X)
+            return np.vstack(embs_list)
 
-        n_clusters = choose_n_clusters(self.cfg.n_speakers, X.shape[0])
-        clustering = AgglomerativeClustering(n_clusters=n_clusters)
-        labels = clustering.fit_predict(X)
+        X = []
+        with torch.no_grad():
+            for wav in tensors:
+                emb = self.clf.encode_batch(wav).mean(dim=1).squeeze().cpu().numpy()
+                X.append(emb)
 
-        times = [(s_t, e_t) for (_, _, s_t, e_t) in chunks]
-        merged = merge_segments(labels.tolist(), times, self.cfg.min_silence_merge)
+        return np.vstack(X)
 
-        new_utts: List[Utterance] = []
-        for lab, s, e in merged:
-            seg_words = words_in_span(base.words or [], s, e)
-            seg_text = " ".join(w.text for w in seg_words)
-            new_utts.append(Utterance(
-                speaker=f"SPEAKER_{int(lab)}",
-                start=s,
-                end=e,
-                text=seg_text,
-                words=seg_words if seg_words else None
-            ))
-
-        if not new_utts:
-            base.speaker = "SPEAKER_0"
-            result.utterances = [base]
-        else:
-            result.utterances = new_utts
-
-        return result
+    def _encode_batch(self, batch_tensors: List[torch.Tensor]) -> np.ndarray:
+        batch = torch.nn.utils.rnn.pad_sequence(
+            [w.squeeze(0) for w in batch_tensors],
+            batch_first=True,
+        )
+        with torch.no_grad():
+            return self.clf.encode_batch(batch).mean(dim=1).cpu().numpy()

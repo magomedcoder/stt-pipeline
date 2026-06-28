@@ -19,7 +19,8 @@
 
 ```bash
 sudo apt install ffmpeg mpg123
-pip install git+https://github.com/magomedcoder/stt-pipeline.git
+
+pip install git+https://github.com/magomedcoder/sttspeakerid.git
 ```
 
 #### Запуск примера
@@ -35,7 +36,7 @@ source .venv/bin/activate
 
 pip install -e .
 
-mkdir -p models files/audio files/out files/tmp
+mkdir -p models files/audio files/out
 
 wget -P models/ https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
 
@@ -44,10 +45,7 @@ unzip models/vosk-model-small-ru-0.22.zip -d models/
 git clone https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb models/spkrec-ecapa-voxceleb
 
 # Запуск пакетной обработки (обработает все файлы из ./files/audio)
-python3 run_local.py
-
-# Альтернативный вариант - запуск http-сервера
-python3 run_http.py
+python3 main.py
 ```
 
 ---
